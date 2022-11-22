@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @RestController
 public class PaymentController {
-//6666
+
     @Value("${server.port}")
     private String serverPort;
 
