@@ -2,6 +2,7 @@ package com.jm.cloudalibaba.controller;
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.jm.cloudalibaba.service.PaymentService;
 import com.jm.springcloud.entities.CommonResult;
 import com.jm.springcloud.entities.Payment;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,11 @@ public class CircleBreakerController {
 
     @GetMapping("/consumer/fallback/{id}")
     //@SentinelResource(value = "fallback")//没有配置
-    //@SentinelResource(value = "fallback",fallback = "handlerFallback")//fallback负责业务异常
-    @SentinelResource(value = "fallback",blockHandler = "blockHandler") //blockHandler负责在sentinel里面配置的降级限流
+    //@SentinelResource(value = "fallback",fallback = "handlerFallback") // fallback负责业务异常
+    //@SentinelResource(value = "fallback",blockHandler = "blockHandler") //blockHandler负责在sentinel里面配置的降级限流
+    //@SentinelResource(value = "fallback",fallback = "handlerFallback",blockHandler = "blockHandler")
+    @SentinelResource(value = "fallback",fallback = "handlerFallback",blockHandler = "blockHandler",
+            exceptionsToIgnore = {IllegalArgumentException.class})
     public CommonResult<Payment> fallback(@PathVariable("id") Long id){
         CommonResult<Payment> result = restTemplate.getForObject(SERVER_URL + "/paymentSQL/" + id, CommonResult.class, id);
 
@@ -46,4 +50,12 @@ public class CircleBreakerController {
         return new CommonResult<>(445,"blockHandler-sentinel限流,无此流水: blockException  "+blockException.getMessage(),payment);
     }
 
+    //===========OpenFeign
+    @Resource
+    private PaymentService paymentService;
+
+    @GetMapping(value = "/consumer/paymentSQL/{id}")
+    public CommonResult<Payment> paymentSQL(@PathVariable("id") Long id){
+        return paymentService.paymentSQL(id);
+    }
 }
